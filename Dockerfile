@@ -42,6 +42,22 @@ RUN apt-get update && apt-get install -y \
     fonts-dejavu-extra \
     && rm -rf /var/lib/apt/lists/*
 
+# Install proxy dependencies
+RUN apt-get install -y tinyproxy
+
+# Update tinyproxy configuration
+RUN sed -i 's/^#Allow 127.0.0.1/Allow 0.0.0.0\/0/' /etc/tinyproxy/tinyproxy.conf
+RUN echo "ConnectPort 443" >> /etc/tinyproxy/tinyproxy.conf
+RUN echo "ConnectPort 563" >> /etc/tinyproxy/tinyproxy.conf
+RUN echo "MaxClients 100" >> /etc/tinyproxy/tinyproxy.conf
+
+# Add tinyproxy to supervisor
+RUN echo "[program:tinyproxy]" >> /etc/supervisor/conf.d/supervisord.conf
+RUN echo "command=/usr/sbin/tinyproxy -d" >> /etc/supervisor/conf.d/supervisord.conf
+RUN echo "autostart=true" >> /etc/supervisor/conf.d/supervisord.conf
+RUN echo "autorestart=true" >> /etc/supervisor/conf.d/supervisord.conf
+
+
 # Install noVNC
 RUN git clone https://github.com/novnc/noVNC.git /opt/novnc \
     && git clone https://github.com/novnc/websockify /opt/novnc/utils/websockify \
